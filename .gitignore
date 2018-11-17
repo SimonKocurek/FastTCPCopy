@@ -1,4 +1,7 @@
-
 /kopr.iml
-/target/
 /.idea/
+/client/client.iml
+/target/
+/server/target/
+/client/target/
+/server/server.iml
