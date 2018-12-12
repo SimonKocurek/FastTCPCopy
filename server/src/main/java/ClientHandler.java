@@ -3,6 +3,8 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.nio.file.Files;
 import java.util.Arrays;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 public class ClientHandler extends Thread {
 
@@ -107,12 +109,18 @@ public class ClientHandler extends Thread {
             out.println(listener.getLocalPort());
             System.out.println("Waiting for client to connect to uploader streams");
 
+            ExecutorService executor = Executors.newFixedThreadPool(threads);
+
+            long offset = 0;
             for (int i = 0; i < threads; i++) {
-                new Uploader(chunks[i], listener.accept()).start();
+                Uploader uploader = new Uploader(offset, chunks[i], listener.accept());
+                executor.submit(uploader);
+
+                offset += chunks[i].length;
             }
 
         } catch (IOException e) {
-            System.err.println("main.java.Uploader socket failed");
+            System.err.println("Uploader socket failed");
             e.printStackTrace();
         }
     }

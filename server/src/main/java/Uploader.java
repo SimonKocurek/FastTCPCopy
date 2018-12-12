@@ -6,8 +6,10 @@ public class Uploader extends Thread {
 
     private final Socket client;
     private final byte[] data;
+    private final long dataOffset;
 
-    Uploader(byte[] data, Socket client) {
+    Uploader(long dataOffset, byte[] data, Socket client) {
+        this.dataOffset = dataOffset;
         this.client = client;
         this.data = data;
 
@@ -16,9 +18,9 @@ public class Uploader extends Thread {
 
     @Override
     public void run() {
-        try {
-            DataOutputStream sent = new DataOutputStream(client.getOutputStream());
-            sent.writeInt(data.length);
+        try (DataOutputStream sent = new DataOutputStream(client.getOutputStream())) {
+            sent.writeLong(data.length);
+            sent.writeLong(dataOffset);
             sent.write(data);
             sent.flush();
 

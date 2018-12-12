@@ -1,7 +1,8 @@
 import java.io.IOException;
 import java.net.ServerSocket;
+import java.net.SocketException;
 
-class CopyServer {
+class CopyServer implements Runnable {
 
     private final int serverPort;
 
@@ -13,11 +14,15 @@ class CopyServer {
         System.out.println("Starting server at " + serverPort);
     }
 
-    void start() {
+    @Override
+    public void run() {
         try (ServerSocket listener = new ServerSocket(serverPort)) {
-            while (true) {
+            while (!Thread.interrupted()) {
                 new ClientHandler(listener.accept(), clientNumber++).start();
             }
+
+        } catch (SocketException e) {
+            System.out.println("Server shutting down");
 
         } catch (IOException e) {
             System.err.println("Server socket error");

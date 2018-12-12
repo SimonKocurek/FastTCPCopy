@@ -10,16 +10,18 @@ public class Downloader extends Thread {
     private final int uploaderPort;
     private final String serverAddress;
     private final RandomAccessFile file;
-    private final long fileStart;
     private final CountDownLatch downloadingThreads;
 
-    Downloader(int id, String serverAddress, int uploaderPort, RandomAccessFile file,
-               long fileStart, CountDownLatch downloadingThreads) {
+    private long downloaded;
+    private long fileStart;
+    private int chunkSize = 1024;
+
+    Downloader(int id, String serverAddress, int uploaderPort, RandomAccessFile file, CountDownLatch downloadingThreads) {
         this.id = id;
         this.serverAddress = serverAddress;
         this.uploaderPort = uploaderPort;
         this.file = file;
-        this.fileStart = fileStart;
+        this.downloaded = 0;
         this.downloadingThreads = downloadingThreads;
 
         System.out.println("Started downloader " + id);
@@ -29,6 +31,7 @@ public class Downloader extends Thread {
     public void run() {
         try (Socket server = new Socket(serverAddress, uploaderPort)) {
             downloadData(server);
+            downloadingThreads.countDown();
 
         } catch (IOException e) {
             System.err.println("Creating socket " + id + " on "
@@ -38,13 +41,17 @@ public class Downloader extends Thread {
     }
 
     private void downloadData(Socket server) {
-        try {
-            DataInputStream received = new DataInputStream(server.getInputStream());
-            int size = received.readInt();
-            byte[] message = new byte[size];
-            received.readFully(message, 0, message.length);
+        try (DataInputStream received = new DataInputStream(server.getInputStream())) {
+            long size = received.readLong();
+            fileStart = received.readLong();
 
-            writeContent(message);
+            while (downloaded < size && !Thread.interrupted()) {
+                byte[] message = new byte[chunkSize];
+                int read = received.read(message, 0, message.length);
+                writeContent(message, read);
+
+                downloaded += read;
+            }
 
         } catch (IOException e) {
             System.err.println("Failed downloading file " + server);
@@ -52,15 +59,15 @@ public class Downloader extends Thread {
         }
     }
 
-    private void writeContent(byte[] message) throws IOException {
+    private void writeContent(byte[] message, int read) throws IOException {
+        long offset = fileStart + downloaded;
+
         synchronized (file) {
-            System.out.print("Donwloader " + id + " started writing at " + fileStart + " ...");
-            file.seek(fileStart);
-            file.write(message);
+            System.out.print("Downloader " + id + " writing at " + offset + "-" + (offset + read - 1) + " ...");
+            file.seek(offset);
+            file.write(message, 0, read);
             System.out.println("done");
         }
-
-        downloadingThreads.countDown();
     }
 
 }

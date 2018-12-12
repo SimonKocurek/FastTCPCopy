@@ -2,8 +2,10 @@ import java.io.*;
 import java.net.Socket;
 import java.net.UnknownHostException;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
-class CopyClient {
+class CopyClient implements Runnable {
 
     private final String serverAddress;
     private final int serverPort;
@@ -17,6 +19,8 @@ class CopyClient {
     private BufferedReader in;
     private long filesize;
 
+    private ExecutorService executor;
+
     CopyClient(String serverAddress, int serverPort, String filename, int threads) {
         this.serverAddress = serverAddress;
         this.serverPort = serverPort;
@@ -24,7 +28,8 @@ class CopyClient {
         this.threads = threads;
     }
 
-    void start() {
+    @Override
+    public void run() {
         try (Socket socket = new Socket(serverAddress, serverPort)) {
             System.out.println("Connected to server " + socket);
             handleConnection(socket);
@@ -50,16 +55,19 @@ class CopyClient {
     private void finalizeDownload() {
         try {
             downloadingThreads.await();
-            file.close();
-            System.out.println("File downloaded sucessfully");
-
         } catch (InterruptedException e) {
-            e.printStackTrace();
-
-        } catch (IOException e) {
-            e.printStackTrace();
+            executor.shutdownNow();
+            System.out.println("Paused");
         }
 
+        try {
+            file.close();
+            System.out.println("File downloaded successfully");
+
+        } catch (IOException e) {
+            System.err.println("Failed closing file");
+            e.printStackTrace();
+        }
     }
 
     private void initializeStreams(Socket socket) throws IOException {
@@ -83,7 +91,7 @@ class CopyClient {
             file.setLength(filesize);
 
         } catch (IOException e) {
-            System.err.println("Failed creating donwloaded file");
+            System.err.println("Failed creating downloaded file");
             e.printStackTrace();
         }
     }
@@ -93,11 +101,11 @@ class CopyClient {
             int uploaderPort = Integer.parseInt(in.readLine());
             downloadingThreads = new CountDownLatch(threads);
 
-            for (int i = 0; i < threads; i++) {
-                long chunkSize = filesize / threads;
-                long fileStart = i * chunkSize;
+            executor = Executors.newFixedThreadPool(threads);
 
-                new Downloader(i, serverAddress, uploaderPort, file, fileStart, downloadingThreads).start();
+            for (int i = 0; i < threads; i++) {
+                Downloader downloader = new Downloader(i, serverAddress, uploaderPort, file, downloadingThreads);
+                executor.submit(downloader);
             }
 
         } catch (IOException e) {
