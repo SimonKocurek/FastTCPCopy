@@ -25,8 +25,7 @@ public class Uploader extends Thread {
             sent.flush();
 
         } catch (IOException e) {
-            System.err.println("Failed writing data " + client);
-            e.printStackTrace();
+            System.out.println("Closing sending socket. " + e.getMessage());
         }
 
         closeSocket();

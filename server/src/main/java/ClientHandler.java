@@ -97,8 +97,7 @@ public class ClientHandler extends Thread {
             }
 
         } catch (IOException e) {
-            System.err.println("Executing command failed for client " + clientNumber);
-            e.printStackTrace();
+            System.err.println("Executing command failed for client " + clientNumber + ". " + e.getMessage());
         }
     }
 
@@ -120,8 +119,7 @@ public class ClientHandler extends Thread {
             }
 
         } catch (IOException e) {
-            System.err.println("Uploader socket failed");
-            e.printStackTrace();
+            System.out.println("Uploader socket closed. " + e.getMessage());
         }
     }
 
