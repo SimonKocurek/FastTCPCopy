@@ -37,8 +37,7 @@ public class Downloader extends Thread {
             downloadingThreads.countDown();
 
         } catch (IOException e) {
-            System.err.println("Creating socket " + id + " on "
-                    + serverAddress + ":" + uploaderPort + " failed");
+            System.err.println("Creating socket " + id + " on " + serverAddress + ":" + uploaderPort + " failed");
             e.printStackTrace();
         }
     }
@@ -49,22 +48,26 @@ public class Downloader extends Thread {
             fileStart = received.readLong();
             byte[] message = new byte[chunkSize];
 
-            while (downloaded < size) {
-                if (Thread.interrupted()) {
-                    saveState(fileStart + downloaded, fileStart + size);
-                    break;
-                }
-
-                int read = received.read(message, 0, message.length);
-                writeContent(message, read);
-
-                downloaded += read;
-                progressWatcher.add(read);
-            }
+            downloadChunks(received, size, message);
 
         } catch (IOException e) {
             System.err.println("Failed downloading file " + server);
             e.printStackTrace();
+        }
+    }
+
+    private void downloadChunks(DataInputStream received, long size, byte[] message) throws IOException {
+        while (downloaded < size) {
+            if (Thread.interrupted()) {
+                saveState(fileStart + downloaded, fileStart + size);
+                break;
+            }
+
+            int read = received.read(message, 0, message.length);
+            writeContent(message, read);
+
+            downloaded += read;
+            progressWatcher.add(read);
         }
     }
 

@@ -54,7 +54,7 @@ public class Controller {
     @FXML
     public void clearClicked(ActionEvent actionEvent) {
         String filename = this.filename.getText();
-        String basename = Util.baseNameFromFilename(filename);
+        String basename = Util.basenameFromFilename(filename);
 
         if (new File(basename).delete()) {
             System.out.println("Downloaded file deleted");

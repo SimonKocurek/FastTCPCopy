@@ -1,3 +1,7 @@
+import commands.Command;
+import commands.GetCommand;
+import commands.ResumeCommand;
+
 import java.io.*;
 import java.net.Socket;
 import java.net.UnknownHostException;
@@ -19,7 +23,6 @@ class CopyClient implements Runnable {
 
     private PrintWriter out;
     private BufferedReader in;
-    private long filesize;
 
     private ExecutorService executor;
 
@@ -49,10 +52,67 @@ class CopyClient implements Runnable {
 
     private void handleConnection(Socket socket) throws IOException {
         initializeStreams(socket);
-        sendCommand(out, "GET");
+        sendCommand();
         initializeLocalData();
         connectToUploaders();
         finalizeDownload();
+    }
+
+    private void initializeStreams(Socket socket) throws IOException {
+        out = new PrintWriter(socket.getOutputStream(), true);
+        in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+    }
+
+    private void sendCommand() {
+        try {
+            getDownloadCommand().execute(out);
+
+        } catch (IOException e) {
+            System.err.println("Sending command failed");
+            e.printStackTrace();
+        }
+    }
+
+    private Command getDownloadCommand() {
+        File stateFile = new File(Util.basenameFromFilename(filename + ".download"));
+        if (stateFile.exists()) {
+            return new ResumeCommand(filename, threads);
+        } else {
+            return new GetCommand(filename, threads);
+        }
+    }
+
+    private void initializeLocalData() {
+        try {
+
+            long fileSize = Long.parseLong(in.readLine());
+            file = new RandomAccessFile(Util.basenameFromFilename(filename), "rw");
+            file.setLength(fileSize);
+            progressWatcher.setEnd(fileSize);
+
+        } catch (IOException e) {
+            System.err.println("Failed creating downloaded file");
+            e.printStackTrace();
+        }
+    }
+
+    private void connectToUploaders() {
+        try {
+            int uploaderPort = Integer.parseInt(in.readLine());
+            downloadingThreads = new CountDownLatch(threads);
+
+            executor = Executors.newFixedThreadPool(threads);
+
+            for (int i = 0; i < threads; i++) {
+                Downloader downloader = new Downloader(i, serverAddress, uploaderPort,
+                        Util.basenameFromFilename(filename), file, progressWatcher, downloadingThreads);
+                executor.submit(downloader);
+            }
+
+        } catch (IOException e) {
+            System.err.println("Failed connecting to uploader");
+            e.printStackTrace();
+        }
     }
 
     private void finalizeDownload() {
@@ -76,7 +136,7 @@ class CopyClient implements Runnable {
     }
 
     private void deleteStateFile() {
-        if (new File(Util.baseNameFromFilename(filename + ".download")).delete()) {
+        if (new File(Util.basenameFromFilename(filename + ".download")).delete()) {
             System.out.println("Previous state file deleted");
         }
     }
@@ -96,51 +156,6 @@ class CopyClient implements Runnable {
 
         } catch (IOException e) {
             System.err.println("Failed closing file");
-            e.printStackTrace();
-        }
-    }
-
-    private void initializeStreams(Socket socket) throws IOException {
-        out = new PrintWriter(socket.getOutputStream(), true);
-        in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-    }
-
-    private void sendCommand(PrintWriter out, String name) {
-        out.println(filename);
-        out.println(threads);
-        out.println(name);
-        System.out.println("Sent " + name + " command");
-    }
-
-    private void initializeLocalData() {
-        try {
-            filesize = Long.parseLong(in.readLine());
-            progressWatcher.setEnd(filesize);
-
-            file = new RandomAccessFile(Util.baseNameFromFilename(filename), "rw");
-            file.setLength(filesize);
-
-        } catch (IOException e) {
-            System.err.println("Failed creating downloaded file");
-            e.printStackTrace();
-        }
-    }
-
-    private void connectToUploaders() {
-        try {
-            int uploaderPort = Integer.parseInt(in.readLine());
-            downloadingThreads = new CountDownLatch(threads);
-
-            executor = Executors.newFixedThreadPool(threads);
-
-            for (int i = 0; i < threads; i++) {
-                Downloader downloader = new Downloader(i, serverAddress, uploaderPort,
-                        Util.baseNameFromFilename(filename), file, progressWatcher, downloadingThreads);
-                executor.submit(downloader);
-            }
-
-        } catch (IOException e) {
-            System.err.println("Failed connecting to uploader");
             e.printStackTrace();
         }
     }

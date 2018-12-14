@@ -1,6 +1,6 @@
-public class Util {
+class Util {
 
-    public static String baseNameFromFilename(String filename) {
+    static String basenameFromFilename(String filename) {
         String[] filePath = filename.split("/");
         return filePath[filePath.length - 1];
     }
