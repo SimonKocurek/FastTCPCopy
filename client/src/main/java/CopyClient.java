@@ -4,6 +4,7 @@ import java.net.UnknownHostException;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
 class CopyClient implements Runnable {
 
@@ -11,6 +12,7 @@ class CopyClient implements Runnable {
     private final int serverPort;
     private final String filename;
     private final int threads;
+    private final ProgressWatcher progressWatcher;
 
     private RandomAccessFile file;
     private CountDownLatch downloadingThreads;
@@ -21,11 +23,12 @@ class CopyClient implements Runnable {
 
     private ExecutorService executor;
 
-    CopyClient(String serverAddress, int serverPort, String filename, int threads) {
+    CopyClient(String serverAddress, int serverPort, String filename, int threads, ProgressWatcher progressWatcher) {
         this.serverAddress = serverAddress;
         this.serverPort = serverPort;
         this.filename = filename;
         this.threads = threads;
+        this.progressWatcher = progressWatcher;
     }
 
     @Override
@@ -53,16 +56,43 @@ class CopyClient implements Runnable {
     }
 
     private void finalizeDownload() {
+        waitToFinishDownloading();
+        closeFile();
+    }
+
+    private void waitToFinishDownloading() {
         try {
             downloadingThreads.await();
-        } catch (InterruptedException e) {
-            executor.shutdownNow();
-            System.out.println("Paused");
-        }
+            deleteStateFile();
+            System.out.println("Download finished");
 
+        } catch (InterruptedException e) {
+            deleteStateFile();
+            executor.shutdownNow();
+
+            System.out.println("Paused");
+            waitForPause();
+        }
+    }
+
+    private void deleteStateFile() {
+        if (new File(baseNameFromFilename(filename + ".download")).delete()) {
+            System.out.println("Previous state file deleted");
+        }
+    }
+
+    private void waitForPause() {
+        try {
+            executor.awaitTermination(15, TimeUnit.SECONDS);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void closeFile() {
         try {
             file.close();
-            System.out.println("File downloaded successfully");
+            System.out.println("File closed successfully");
 
         } catch (IOException e) {
             System.err.println("Failed closing file");
@@ -85,9 +115,9 @@ class CopyClient implements Runnable {
     private void initializeLocalData() {
         try {
             filesize = Long.parseLong(in.readLine());
+            progressWatcher.setEnd(filesize);
 
-            String[] filePath = filename.split("/");
-            file = new RandomAccessFile(filePath[filePath.length - 1], "rw");
+            file = new RandomAccessFile(baseNameFromFilename(filename), "rw");
             file.setLength(filesize);
 
         } catch (IOException e) {
@@ -104,7 +134,8 @@ class CopyClient implements Runnable {
             executor = Executors.newFixedThreadPool(threads);
 
             for (int i = 0; i < threads; i++) {
-                Downloader downloader = new Downloader(i, serverAddress, uploaderPort, file, downloadingThreads);
+                Downloader downloader = new Downloader(i, serverAddress, uploaderPort,
+                        baseNameFromFilename(filename), file, progressWatcher, downloadingThreads);
                 executor.submit(downloader);
             }
 
@@ -112,6 +143,11 @@ class CopyClient implements Runnable {
             System.err.println("Failed connecting to uploader");
             e.printStackTrace();
         }
+    }
+
+    private String baseNameFromFilename(String filename) {
+        String[] filePath = filename.split("/");
+        return filePath[filePath.length - 1];
     }
 
 }

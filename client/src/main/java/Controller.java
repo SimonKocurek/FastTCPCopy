@@ -32,9 +32,9 @@ public class Controller {
         int port = Integer.valueOf(connectionUrl.split(":")[1]);
         int threads = Integer.valueOf(connections.getText());
 
-        progressbar.setProgress(50);
+        ProgressWatcher progressWatcher = new ProgressWatcher(progressbar);
 
-        CopyClient copyClient = new CopyClient(hostname, port, filename, threads);
+        CopyClient copyClient = new CopyClient(hostname, port, filename, threads, progressWatcher);
         executor.submit(copyClient);
     }
 
@@ -44,8 +44,9 @@ public class Controller {
         System.out.println("Shutting down client");
 
         try {
-            executor.awaitTermination(10, TimeUnit.SECONDS);
+            executor.awaitTermination(15, TimeUnit.SECONDS);
         } catch (InterruptedException e) {
+            System.err.println("Cliend timeoud closing connections");
             e.printStackTrace();
         }
     }

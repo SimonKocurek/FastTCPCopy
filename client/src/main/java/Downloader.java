@@ -1,6 +1,4 @@
-import java.io.DataInputStream;
-import java.io.IOException;
-import java.io.RandomAccessFile;
+import java.io.*;
 import java.net.Socket;
 import java.util.concurrent.CountDownLatch;
 
@@ -9,18 +7,23 @@ public class Downloader extends Thread {
     private final int id;
     private final int uploaderPort;
     private final String serverAddress;
+    private final String filename;
     private final RandomAccessFile file;
+    private final ProgressWatcher progressWatcher;
     private final CountDownLatch downloadingThreads;
 
     private long downloaded;
     private long fileStart;
-    private int chunkSize = 1024;
+    private int chunkSize = 1;
 
-    Downloader(int id, String serverAddress, int uploaderPort, RandomAccessFile file, CountDownLatch downloadingThreads) {
+    Downloader(int id, String serverAddress, int uploaderPort, String filename,
+               RandomAccessFile file, ProgressWatcher progressWatcher, CountDownLatch downloadingThreads) {
         this.id = id;
         this.serverAddress = serverAddress;
         this.uploaderPort = uploaderPort;
+        this.filename = filename;
         this.file = file;
+        this.progressWatcher = progressWatcher;
         this.downloaded = 0;
         this.downloadingThreads = downloadingThreads;
 
@@ -44,13 +47,19 @@ public class Downloader extends Thread {
         try (DataInputStream received = new DataInputStream(server.getInputStream())) {
             long size = received.readLong();
             fileStart = received.readLong();
+            byte[] message = new byte[chunkSize];
 
-            while (downloaded < size && !Thread.interrupted()) {
-                byte[] message = new byte[chunkSize];
+            while (downloaded < size) {
+                if (Thread.interrupted()) {
+                    saveState(fileStart + downloaded, fileStart + size);
+                    break;
+                }
+
                 int read = received.read(message, 0, message.length);
                 writeContent(message, read);
 
                 downloaded += read;
+                progressWatcher.add(read);
             }
 
         } catch (IOException e) {
@@ -59,14 +68,27 @@ public class Downloader extends Thread {
         }
     }
 
+    private void saveState(long pointer, long end) {
+        synchronized (file) {
+            File stateFile = new File(filename + ".download");
+
+            try (PrintWriter writer = new PrintWriter(new FileOutputStream(stateFile, true))) {
+                writer.println(pointer + "-" + end);
+                System.out.println("Downloader " + id + " saved state " + pointer + "-" + end);
+
+            } catch (FileNotFoundException e) {
+                System.err.println("Failed saving paused state");
+                e.printStackTrace();
+            }
+        }
+    }
+
     private void writeContent(byte[] message, int read) throws IOException {
         long offset = fileStart + downloaded;
 
         synchronized (file) {
-            System.out.print("Downloader " + id + " writing at " + offset + "-" + (offset + read - 1) + " ...");
             file.seek(offset);
             file.write(message, 0, read);
-            System.out.println("done");
         }
     }
 
