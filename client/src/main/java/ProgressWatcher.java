@@ -14,16 +14,14 @@ class ProgressWatcher {
         this.progressbar = progressbar;
     }
 
-    public void add(long added) {
+    void add(long added) {
         long newDone = this.done.addAndGet(added);
         double newProgress = (double) newDone / end;
-
-        synchronized (progressbar) {
-            this.progressbar.setProgress(newProgress);
-        }
+        // setProgress is threadSafe
+        this.progressbar.setProgress(newProgress);
     }
 
-    public void setEnd(long end) {
+    void setEnd(long end) {
         this.end = end;
     }
 

@@ -76,7 +76,7 @@ class CopyClient implements Runnable {
     }
 
     private void deleteStateFile() {
-        if (new File(baseNameFromFilename(filename + ".download")).delete()) {
+        if (new File(Util.baseNameFromFilename(filename + ".download")).delete()) {
             System.out.println("Previous state file deleted");
         }
     }
@@ -117,7 +117,7 @@ class CopyClient implements Runnable {
             filesize = Long.parseLong(in.readLine());
             progressWatcher.setEnd(filesize);
 
-            file = new RandomAccessFile(baseNameFromFilename(filename), "rw");
+            file = new RandomAccessFile(Util.baseNameFromFilename(filename), "rw");
             file.setLength(filesize);
 
         } catch (IOException e) {
@@ -135,7 +135,7 @@ class CopyClient implements Runnable {
 
             for (int i = 0; i < threads; i++) {
                 Downloader downloader = new Downloader(i, serverAddress, uploaderPort,
-                        baseNameFromFilename(filename), file, progressWatcher, downloadingThreads);
+                        Util.baseNameFromFilename(filename), file, progressWatcher, downloadingThreads);
                 executor.submit(downloader);
             }
 
@@ -143,11 +143,6 @@ class CopyClient implements Runnable {
             System.err.println("Failed connecting to uploader");
             e.printStackTrace();
         }
-    }
-
-    private String baseNameFromFilename(String filename) {
-        String[] filePath = filename.split("/");
-        return filePath[filePath.length - 1];
     }
 
 }

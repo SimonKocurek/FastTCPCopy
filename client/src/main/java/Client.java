@@ -8,8 +8,8 @@ public class Client extends Application {
 
     @Override
     public void start(Stage primaryStage) throws Exception {
-        Parent root = FXMLLoader.load(getClass().getResource("/sample.fxml"));
-        primaryStage.setTitle("Para-Downloader");
+        Parent root = FXMLLoader.load(getClass().getResource("/client.fxml"));
+        primaryStage.setTitle("FastTCPCopy");
         primaryStage.setScene(new Scene(root, 800, 600));
         primaryStage.show();
     }

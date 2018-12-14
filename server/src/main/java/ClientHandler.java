@@ -1,7 +1,9 @@
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.PrintWriter;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.nio.file.Files;
 import java.util.Arrays;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -14,9 +16,8 @@ public class ClientHandler extends Thread {
     private BufferedReader in;
     private PrintWriter out;
 
-    private File file;
-    private byte[][] chunks;
     private int threads;
+    private byte[][] fileChunks;
 
     ClientHandler(Socket socket, int clientNumber) {
         this.socket = socket;
@@ -29,7 +30,7 @@ public class ClientHandler extends Thread {
     public void run() {
         try {
             initializeStreams();
-            loadFile();
+            loadFileChunks();
             executeClientCommand();
             closeSocket();
 
@@ -39,45 +40,20 @@ public class ClientHandler extends Thread {
         }
     }
 
-    private void initializeStreams() throws IOException {
-        in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-        out = new PrintWriter(socket.getOutputStream(), true);
-    }
-
-    private void loadFile() {
+    private void loadFileChunks() {
         try {
             String filename = in.readLine();
-            file = new File(filename);
-
             threads = Integer.valueOf(in.readLine());
-
-            byte[] fileContent = getFileBytes();
-            chunks = splitFileIntoChunks(fileContent);
-
+            fileChunks = new FileLoader().loadFile(filename, threads);
         } catch (IOException e) {
             System.err.println("Reading file failed");
             e.printStackTrace();
         }
     }
 
-    private byte[] getFileBytes() throws IOException {
-        byte[] fileContent = Files.readAllBytes(file.toPath());
-        System.out.println("File " + file + " read with " + fileContent.length + "B");
-        return fileContent;
-    }
-
-    private byte[][] splitFileIntoChunks(byte[] fileContent) {
-        byte[][] chunks = new byte[threads][];
-
-        int chunkSize = fileContent.length / threads;
-
-        for (int i = 0; i < threads; i++) {
-            int end = i + 1 < threads ? i * chunkSize + chunkSize : fileContent.length;
-            chunks[i] = Arrays.copyOfRange(fileContent, i * chunkSize, end);
-        }
-
-        System.out.println("File split into " + threads + " chunks");
-        return chunks;
+    private void initializeStreams() throws IOException {
+        in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+        out = new PrintWriter(socket.getOutputStream(), true);
     }
 
     private void executeClientCommand() {
@@ -102,7 +78,7 @@ public class ClientHandler extends Thread {
     }
 
     private void handleGet() {
-        out.println(file.length());
+        out.println(fileSize());
 
         try (ServerSocket listener = new ServerSocket(socket.getLocalPort() + clientNumber)) {
             out.println(listener.getLocalPort());
@@ -112,10 +88,10 @@ public class ClientHandler extends Thread {
 
             long offset = 0;
             for (int i = 0; i < threads; i++) {
-                Uploader uploader = new Uploader(offset, chunks[i], listener.accept());
+                Uploader uploader = new Uploader(offset, fileChunks[i], listener.accept());
                 executor.submit(uploader);
 
-                offset += chunks[i].length;
+                offset += fileChunks[i].length;
             }
 
         } catch (IOException e) {
@@ -124,6 +100,7 @@ public class ClientHandler extends Thread {
     }
 
     private void handleResume() {
+
     }
 
     private void closeSocket() {
@@ -136,6 +113,12 @@ public class ClientHandler extends Thread {
             System.err.println("Failed closing socket for client" + clientNumber);
             e.printStackTrace();
         }
+    }
+
+    private long fileSize() {
+        return Arrays.stream(fileChunks)
+                .mapToLong(chunk -> chunk.length)
+                .sum();
     }
 
 }

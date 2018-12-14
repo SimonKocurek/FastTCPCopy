@@ -3,6 +3,7 @@ import javafx.fxml.FXML;
 import javafx.scene.control.ProgressBar;
 import javafx.scene.control.TextField;
 
+import java.io.File;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -25,7 +26,6 @@ public class Controller {
 
     @FXML
     public void downloadClicked(ActionEvent actionEvent) {
-
         String filename = this.filename.getText();
         String connectionUrl = this.connectionUrl.getText();
         String hostname = connectionUrl.split(":")[0];
@@ -46,8 +46,21 @@ public class Controller {
         try {
             executor.awaitTermination(15, TimeUnit.SECONDS);
         } catch (InterruptedException e) {
-            System.err.println("Cliend timeoud closing connections");
+            System.err.println("Client timeout closing connections");
             e.printStackTrace();
+        }
+    }
+
+    @FXML
+    public void clearClicked(ActionEvent actionEvent) {
+        String filename = this.filename.getText();
+        String basename = Util.baseNameFromFilename(filename);
+
+        if (new File(basename).delete()) {
+            System.out.println("Downloaded file deleted");
+        }
+        if (new File(basename + ".download").delete()) {
+            System.out.println("State file deleted");
         }
     }
 

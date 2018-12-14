@@ -9,6 +9,7 @@
          <children>
             <Button mnemonicParsing="false" onAction="#downloadClicked" text="Download" />
             <Button mnemonicParsing="false" onAction="#pauseClicked" text="Pause" />
+            <Button mnemonicParsing="false" onAction="#clearClicked" text="Clear" />
             <TextField fx:id="filename" promptText="Filename" text="C:/Users/SimonKocurek/Downloads/test.txt" />
             <TextField fx:id="connectionUrl" promptText="Connection Url" text="localhost:9090" />
             <TextField fx:id="connections" promptText="Connections" text="4" />
