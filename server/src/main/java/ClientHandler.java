@@ -1,3 +1,5 @@
+import commands.Command;
+
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -27,12 +29,21 @@ public class ClientHandler extends Thread {
         try {
             initializeStreams();
             loadFileChunks();
-            executeClientCommand();
+            handleClient();
             closeSocket();
 
         } catch (IOException e) {
             System.err.println("Connection for client " + clientNumber + " failed");
             e.printStackTrace();
+        }
+    }
+
+    private void handleClient() {
+        try {
+            String request = in.readLine();
+            Command.forRequest(request).execute(out);
+        } catch (IOException e) {
+            System.err.println("Executing command failed for client " + clientNumber + ". " + e.getMessage());
         }
     }
 
