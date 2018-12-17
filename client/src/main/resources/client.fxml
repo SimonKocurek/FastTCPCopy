@@ -1,20 +1,85 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<?import javafx.scene.control.*?>
-<?import javafx.scene.layout.AnchorPane?>
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ProgressBar?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.VBox?>
-<AnchorPane xmlns="http://javafx.com/javafx/8.0.172-ea" xmlns:fx="http://javafx.com/fxml/1" fx:controller="Controller">
+<?import javafx.scene.text.Font?>
+
+<VBox alignment="CENTER" prefHeight="600.0" prefWidth="800.0" spacing="75.0" xmlns="http://javafx.com/javafx/8.0.172-ea" xmlns:fx="http://javafx.com/fxml/1" fx:controller="Controller">
    <children>
       <VBox prefHeight="200.0" prefWidth="100.0">
          <children>
-            <Button fx:id="downloadButton" mnemonicParsing="false" onAction="#downloadClicked" text="Download" />
-            <Button fx:id="pauseButton" mnemonicParsing="false" onAction="#pauseClicked" text="Pause" />
-            <Button fx:id="clearButton" mnemonicParsing="false" onAction="#clearClicked" text="Clear" />
-            <TextField fx:id="filename" promptText="Filename" text="C:/Users/SimonKocurek/Downloads/test.txt" />
-            <TextField fx:id="connectionUrl" promptText="Connection Url" text="localhost:9090" />
-            <TextField fx:id="connections" promptText="Connections" text="4" />
-            <ProgressBar fx:id="progressbar" prefWidth="200.0" progress="0.0" />
+            <HBox alignment="CENTER_LEFT" prefHeight="100.0" prefWidth="200.0" spacing="15.0">
+               <children>
+                  <Label text="File:">
+                     <font>
+                        <Font size="20.0" />
+                     </font></Label>
+                  <TextField fx:id="filename" promptText="Filename" text="C:/Users/SimonKocurek/Downloads/test.txt" />
+               </children>
+               <VBox.margin>
+                  <Insets />
+               </VBox.margin>
+               <padding>
+                  <Insets bottom="19.0" left="19.0" right="19.0" top="19.0" />
+               </padding>
+            </HBox>
+            <HBox alignment="CENTER_LEFT" prefHeight="100.0" prefWidth="200.0" spacing="15.0">
+               <children>
+                  <Label text="Server:">
+                     <font>
+                        <Font size="20.0" />
+                     </font></Label>
+                  <TextField fx:id="connectionUrl" promptText="Connection Url" text="localhost:9090" />
+               </children>
+               <VBox.margin>
+                  <Insets />
+               </VBox.margin>
+               <padding>
+                  <Insets bottom="19.0" left="19.0" right="19.0" top="19.0" />
+               </padding>
+            </HBox>
+            <HBox alignment="CENTER_LEFT" prefHeight="100.0" prefWidth="200.0" spacing="15.0">
+               <children>
+                  <Label text="Connections:">
+                     <font>
+                        <Font size="20.0" />
+                     </font></Label>
+                  <TextField fx:id="connections" promptText="Connections" text="4" />
+               </children>
+               <padding>
+                  <Insets bottom="19.0" left="19.0" right="19.0" top="19.0" />
+               </padding>
+            </HBox>
          </children>
       </VBox>
+      <ProgressBar fx:id="progressbar" prefHeight="131.0" prefWidth="780.0" progress="0.0">
+         <padding>
+            <Insets bottom="19.0" left="19.0" right="19.0" top="19.0" />
+         </padding>
+      </ProgressBar>
+      <HBox alignment="CENTER" prefHeight="100.0" prefWidth="200.0" spacing="50.0">
+         <children>
+            <Button fx:id="downloadButton" mnemonicParsing="false" onAction="#downloadClicked" prefWidth="200.0" text="Download">
+               <font>
+                  <Font size="22.0" />
+               </font>
+            </Button>
+            <Button fx:id="pauseButton" mnemonicParsing="false" onAction="#pauseClicked" prefWidth="200.0" text="Pause">
+               <font>
+                  <Font size="22.0" />
+               </font>
+            </Button>
+            <Button fx:id="clearButton" mnemonicParsing="false" onAction="#clearClicked" prefWidth="200.0" text="Clear">
+               <font>
+                  <Font size="22.0" />
+               </font>
+            </Button>
+         </children>
+      </HBox>
    </children>
-</AnchorPane>
+</VBox>

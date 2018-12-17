@@ -4,7 +4,11 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
+import java.net.ServerSocket;
 import java.net.Socket;
+import java.util.Map;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 public class ClientHandler extends Thread {
 
@@ -38,13 +42,9 @@ public class ClientHandler extends Thread {
         }
     }
 
-    private void handleClient() {
-        try {
-            String request = in.readLine();
-            Command.forRequest(request).execute(out);
-        } catch (IOException e) {
-            System.err.println("Executing command failed for client " + clientNumber + ". " + e.getMessage());
-        }
+    private void initializeStreams() throws IOException {
+        in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+        out = new PrintWriter(socket.getOutputStream(), true);
     }
 
     private void loadFileChunks() {
@@ -58,9 +58,16 @@ public class ClientHandler extends Thread {
         }
     }
 
-    private void initializeStreams() throws IOException {
-        in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-        out = new PrintWriter(socket.getOutputStream(), true);
+    private void handleClient() {
+        try {
+            String request = in.readLine();
+            Command command = Command.forRequest(request);
+            Map<String, Long> configuration = command.getConfiguration(out, fileChunks);
+            new UploaderServerSocket(configuration);
+
+        } catch (IOException e) {
+            System.err.println("Executing command failed for client " + clientNumber + ". " + e.getMessage());
+        }
     }
 
     private void closeSocket() {

@@ -1,8 +1,16 @@
 package commands;
 
-public class ResumeCommand extends Command {
+import java.io.PrintWriter;
+import java.util.HashMap;
+import java.util.Map;
 
-    private void handleResume() {
+class ResumeCommand extends Command {
 
+    @Override
+    Map<String, Long> getAdditionalConfig(PrintWriter out, byte[][] fileChunks) {
+        Map<String, Long> result = new HashMap<>();
+
+        return result;
     }
+
 }

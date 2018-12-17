@@ -84,11 +84,14 @@ class CopyClient implements Runnable {
 
     private void initializeLocalData() {
         try {
-
             long fileSize = Long.parseLong(in.readLine());
+            long downloaded = Long.parseLong(in.readLine());
+
             file = new RandomAccessFile(Util.basenameFromFilename(filename), "rw");
             file.setLength(fileSize);
+
             progressWatcher.setEnd(fileSize);
+            progressWatcher.add(downloaded);
 
         } catch (IOException e) {
             System.err.println("Failed creating downloaded file");

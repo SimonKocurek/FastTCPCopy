@@ -1,6 +1,9 @@
 package commands;
 
 import java.io.PrintWriter;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
 
 public abstract class Command {
 
@@ -14,6 +17,21 @@ public abstract class Command {
         }
     }
 
-    public abstract void execute(PrintWriter out);
+    public Map<String, Long> getConfiguration(PrintWriter out, byte[][] fileChunks) {
+        Map<String, Long> result = new HashMap<>();
+
+        result.put("fileSize", fileSize(fileChunks));
+        getAdditionalConfig(out, fileChunks).forEach(result::put);
+
+        return result;
+    }
+
+    private long fileSize(byte[][] fileChunks) {
+        return Arrays.stream(fileChunks)
+                .mapToLong(chunk -> chunk.length)
+                .sum();
+    }
+
+    abstract Map<String, Long> getAdditionalConfig(PrintWriter out, byte[][] fileChunks);
 
 }

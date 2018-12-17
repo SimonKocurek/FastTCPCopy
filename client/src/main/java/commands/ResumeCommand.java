@@ -15,10 +15,9 @@ public class ResumeCommand extends Command {
     @Override
     void sendAdditionalData(PrintWriter out) throws IOException {
         Path path = Paths.get(filename);
-        Files.lines(path).forEach(line -> {
-            long currentPointer = Long.valueOf(line.split("-")[0]);
-            out.println(currentPointer);
-        });
+        Files.lines(path)
+                .mapToLong(line -> Long.valueOf(line.split("-")[0]))
+                .forEach(pointer -> out.println(pointer));
     }
 
 }
