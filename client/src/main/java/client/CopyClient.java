@@ -1,6 +1,8 @@
-import commands.Command;
-import commands.GetCommand;
-import commands.ResumeCommand;
+package client;
+
+import client.commands.Command;
+import client.commands.GetCommand;
+import client.commands.ResumeCommand;
 
 import java.io.*;
 import java.net.Socket;
@@ -74,7 +76,7 @@ class CopyClient implements Runnable {
     }
 
     private Command getDownloadCommand() {
-        File stateFile = new File(Util.basenameFromFilename(filename + ".download"));
+        File stateFile = new File(Util.stateFileFor(filename));
         if (stateFile.exists()) {
             return new ResumeCommand(filename, threads);
         } else {
@@ -107,8 +109,8 @@ class CopyClient implements Runnable {
             executor = Executors.newFixedThreadPool(threads);
 
             for (int i = 0; i < threads; i++) {
-                Downloader downloader = new Downloader(i, serverAddress, uploaderPort,
-                        Util.basenameFromFilename(filename), file, progressWatcher, downloadingThreads);
+                Downloader downloader = new Downloader(i, serverAddress, uploaderPort, filename,
+                        file, progressWatcher, downloadingThreads);
                 executor.submit(downloader);
             }
 
@@ -139,8 +141,10 @@ class CopyClient implements Runnable {
     }
 
     private void deleteStateFile() {
-        if (new File(Util.basenameFromFilename(filename + ".download")).delete()) {
-            System.out.println("Previous state file deleted");
+        synchronized (file) {
+            if (new File(Util.stateFileFor(filename)).delete()) {
+                System.out.println("Previous state file deleted");
+            }
         }
     }
 

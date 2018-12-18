@@ -1,5 +1,8 @@
+package client;
+
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
+import javafx.scene.control.Button;
 import javafx.scene.control.ProgressBar;
 import javafx.scene.control.TextField;
 
@@ -22,7 +25,16 @@ public class Controller {
     @FXML
     public ProgressBar progressbar;
 
-    private final ExecutorService executor = Executors.newFixedThreadPool(1);
+    @FXML
+    public Button downloadButton;
+
+    @FXML
+    public Button pauseButton;
+
+    @FXML
+    public Button clearButton;
+
+    private ExecutorService executor = Executors.newFixedThreadPool(1);
 
     @FXML
     public void downloadClicked(ActionEvent actionEvent) {
@@ -36,32 +48,43 @@ public class Controller {
 
         CopyClient copyClient = new CopyClient(hostname, port, filename, threads, progressWatcher);
         executor.submit(copyClient);
+
+        clearButton.setDisable(false);
+        pauseButton.setDisable(false);
     }
 
     @FXML
     public void pauseClicked(ActionEvent actionEvent) {
         executor.shutdownNow();
+        downloadButton.setDisable(true);
+        pauseButton.setDisable(true);
+
         System.out.println("Shutting down client");
 
         try {
             executor.awaitTermination(15, TimeUnit.SECONDS);
+            executor = Executors.newFixedThreadPool(1);
+
         } catch (InterruptedException e) {
-            System.err.println("Client timeout closing connections");
+            System.err.println("client.Client timeout closing connections");
             e.printStackTrace();
         }
+
+        downloadButton.setDisable(false);
     }
 
     @FXML
     public void clearClicked(ActionEvent actionEvent) {
         String filename = this.filename.getText();
-        String basename = Util.basenameFromFilename(filename);
 
-        if (new File(basename).delete()) {
+        if (new File(Util.basenameFromFilename(filename)).delete()) {
             System.out.println("Downloaded file deleted");
         }
-        if (new File(basename + ".download").delete()) {
+        if (new File(Util.stateFileFor(filename)).delete()) {
             System.out.println("State file deleted");
         }
+
+        clearButton.setDisable(true);
     }
 
 }

@@ -1,5 +1,6 @@
-package commands;
+package server.commands;
 
+import java.io.BufferedReader;
 import java.io.PrintWriter;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -8,6 +9,7 @@ import java.util.Map;
 public abstract class Command {
 
     public static Command forRequest(String name) {
+        System.out.println("Got command " + name);
         switch (name) {
             case "GET": return new GetCommand();
             case "RESUME": return new ResumeCommand();
@@ -17,11 +19,12 @@ public abstract class Command {
         }
     }
 
-    public Map<String, Long> getConfiguration(PrintWriter out, byte[][] fileChunks) {
+    public Map<String, Long> getConfiguration(PrintWriter out, BufferedReader in, byte[][] fileChunks) {
         Map<String, Long> result = new HashMap<>();
 
         result.put("fileSize", fileSize(fileChunks));
-        getAdditionalConfig(out, fileChunks).forEach(result::put);
+        result.put("threads", (long) fileChunks.length);
+        getAdditionalConfig(out, in, fileChunks).forEach(result::put);
 
         return result;
     }
@@ -32,6 +35,6 @@ public abstract class Command {
                 .sum();
     }
 
-    abstract Map<String, Long> getAdditionalConfig(PrintWriter out, byte[][] fileChunks);
+    abstract Map<String, Long> getAdditionalConfig(PrintWriter out, BufferedReader in, byte[][] fileChunks);
 
 }

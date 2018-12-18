@@ -1,3 +1,5 @@
+package client;
+
 import javafx.scene.control.ProgressBar;
 
 import java.util.concurrent.atomic.AtomicLong;

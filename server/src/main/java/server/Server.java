@@ -1,3 +1,5 @@
+package server;
+
 public class Server {
 
     private static int port = 9090;

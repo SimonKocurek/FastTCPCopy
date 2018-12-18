@@ -1,14 +1,13 @@
-import commands.Command;
+package server;
+
+import server.commands.Command;
 
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
-import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.Map;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 public class ClientHandler extends Thread {
 
@@ -18,14 +17,11 @@ public class ClientHandler extends Thread {
     private BufferedReader in;
     private PrintWriter out;
 
-    private int threads;
     private byte[][] fileChunks;
 
     ClientHandler(Socket socket, int clientNumber) {
         this.socket = socket;
         this.clientNumber = clientNumber;
-
-        System.out.println("New connection " + socket + " for client " + clientNumber);
     }
 
     @Override
@@ -50,7 +46,7 @@ public class ClientHandler extends Thread {
     private void loadFileChunks() {
         try {
             String filename = in.readLine();
-            threads = Integer.valueOf(in.readLine());
+            int threads = Integer.valueOf(in.readLine());
             fileChunks = new FileLoader().loadFile(filename, threads);
         } catch (IOException e) {
             System.err.println("Reading file failed");
@@ -62,8 +58,10 @@ public class ClientHandler extends Thread {
         try {
             String request = in.readLine();
             Command command = Command.forRequest(request);
-            Map<String, Long> configuration = command.getConfiguration(out, fileChunks);
-            new UploaderServerSocket(configuration);
+            Map<String, Long> configuration = command.getConfiguration(out, in, fileChunks);
+            UploaderServerSocket uploaderSocket = new UploaderServerSocket(
+                    configuration, socket, clientNumber, out, fileChunks);
+            uploaderSocket.start();
 
         } catch (IOException e) {
             System.err.println("Executing command failed for client " + clientNumber + ". " + e.getMessage());

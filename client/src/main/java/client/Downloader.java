@@ -1,3 +1,5 @@
+package client;
+
 import java.io.*;
 import java.net.Socket;
 import java.util.concurrent.CountDownLatch;
@@ -26,8 +28,6 @@ public class Downloader extends Thread {
         this.progressWatcher = progressWatcher;
         this.downloaded = 0;
         this.downloadingThreads = downloadingThreads;
-
-        System.out.println("Started downloader " + id);
     }
 
     @Override
@@ -73,11 +73,10 @@ public class Downloader extends Thread {
 
     private void saveState(long pointer, long end) {
         synchronized (file) {
-            File stateFile = new File(filename + ".download");
+            File stateFile = new File(Util.stateFileFor(filename));
 
             try (PrintWriter writer = new PrintWriter(new FileOutputStream(stateFile, true))) {
                 writer.println(pointer + "-" + end);
-                System.out.println("Downloader " + id + " saved state " + pointer + "-" + end);
 
             } catch (FileNotFoundException e) {
                 System.err.println("Failed saving paused state");

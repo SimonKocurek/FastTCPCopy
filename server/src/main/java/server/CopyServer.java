@@ -1,3 +1,5 @@
+package server;
+
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.SocketException;
@@ -10,8 +12,6 @@ class CopyServer implements Runnable {
 
     CopyServer(int serverPort) {
         this.serverPort = serverPort;
-
-        System.out.println("Starting server at " + serverPort);
     }
 
     @Override
@@ -22,10 +22,10 @@ class CopyServer implements Runnable {
             }
 
         } catch (SocketException e) {
-            System.out.println("Server shutting down");
+            System.out.println("server.Server shutting down");
 
         } catch (IOException e) {
-            System.err.println("Server socket error");
+            System.err.println("server.Server socket error");
             e.printStackTrace();
         }
     }

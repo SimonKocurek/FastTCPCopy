@@ -1,4 +1,4 @@
-package commands;
+package client.commands;
 
 import java.io.PrintWriter;
 
@@ -10,6 +10,11 @@ public class GetCommand extends Command {
 
     @Override
     void sendAdditionalData(PrintWriter out) {
+    }
+
+    @Override
+    String getName() {
+        return "GET";
     }
 
 }

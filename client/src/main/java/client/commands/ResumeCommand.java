@@ -1,4 +1,6 @@
-package commands;
+package client.commands;
+
+import client.Util;
 
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -14,10 +16,15 @@ public class ResumeCommand extends Command {
 
     @Override
     void sendAdditionalData(PrintWriter out) throws IOException {
-        Path path = Paths.get(filename);
+        Path path = Paths.get(Util.stateFileFor(filename));
         Files.lines(path)
                 .mapToLong(line -> Long.valueOf(line.split("-")[0]))
-                .forEach(pointer -> out.println(pointer));
+                .forEach(out::println);
+    }
+
+    @Override
+    String getName() {
+        return "RESUME";
     }
 
 }
