@@ -85,6 +85,7 @@ public class Controller {
         }
 
         clearButton.setDisable(true);
+        progressbar.setProgress(0);
     }
 
 }
