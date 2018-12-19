@@ -16,7 +16,7 @@ public class Downloader extends Thread {
 
     private long downloaded;
     private long fileStart;
-    private int chunkSize = 2;
+    private int chunkSize = 1024;
 
     Downloader(int id, String serverAddress, int uploaderPort, String filename,
                RandomAccessFile file, ProgressWatcher progressWatcher, CountDownLatch downloadingThreads) {
