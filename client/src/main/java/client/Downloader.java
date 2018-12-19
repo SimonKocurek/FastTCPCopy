@@ -16,7 +16,7 @@ public class Downloader extends Thread {
 
     private long downloaded;
     private long fileStart;
-    private int chunkSize = 1;
+    private int chunkSize = 5;
 
     Downloader(int id, String serverAddress, int uploaderPort, String filename,
                RandomAccessFile file, ProgressWatcher progressWatcher, CountDownLatch downloadingThreads) {
@@ -75,10 +75,12 @@ public class Downloader extends Thread {
         synchronized (file) {
             File stateFile = new File(Util.stateFileFor(filename));
 
-            try (PrintWriter writer = new PrintWriter(new FileOutputStream(stateFile, true))) {
-                writer.println(pointer + "-" + end);
+            try (FileOutputStream outStream = new FileOutputStream(stateFile, true)) {
+                try (PrintWriter writer = new PrintWriter(outStream)) {
+                    writer.println(pointer + "-" + end);
+                }
 
-            } catch (FileNotFoundException e) {
+            } catch (IOException e) {
                 System.err.println("Failed saving paused state");
                 e.printStackTrace();
             }

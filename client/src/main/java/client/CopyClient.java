@@ -133,6 +133,7 @@ class CopyClient implements Runnable {
 
         } catch (InterruptedException e) {
             deleteStateFile();
+            System.gc(); // https://stackoverflow.com/a/4213208/5521670
             executor.shutdownNow();
 
             System.out.println("Paused");
@@ -141,10 +142,8 @@ class CopyClient implements Runnable {
     }
 
     private void deleteStateFile() {
-        synchronized (file) {
-            if (new File(Util.stateFileFor(filename)).delete()) {
-                System.out.println("Previous state file deleted");
-            }
+        if (new File(Util.stateFileFor(filename)).delete()) {
+            System.out.println("Previous state file deleted");
         }
     }
 
